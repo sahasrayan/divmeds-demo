@@ -1,0 +1,648 @@
+import 'package:divmeds/features/auth/repositories/user_repo.dart';
+import 'package:flutter/material.dart';
+import 'package:divmeds/features/auth/models/user.model.dart';
+import 'package:dio/dio.dart';
+
+class EditProfilePage extends StatefulWidget {
+  final String userId;
+  final String token;
+  final String serverUrl;
+
+  const EditProfilePage({super.key, 
+    required this.userId,
+    required this.token,
+    required this.serverUrl,
+  });
+
+  @override
+  EditProfilePageState createState() => EditProfilePageState();
+}
+
+class EditProfilePageState extends State<EditProfilePage> {
+  final _formKey = GlobalKey<FormState>();
+  late User _user;
+  bool _isLoading = true;
+  bool _isUpdating = false;
+  late UserRepository _repository;
+
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _dobController = TextEditingController();
+  final TextEditingController _genderController = TextEditingController();
+  final TextEditingController _oldPasswordController = TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
+  final TextEditingController _otpController = TextEditingController();
+  final TextEditingController _degreeController = TextEditingController();
+  final TextEditingController _institutionController = TextEditingController();
+  final TextEditingController _startYearController = TextEditingController();
+  final TextEditingController _endYearController = TextEditingController();
+  final TextEditingController _currentYearController = TextEditingController();
+  final TextEditingController _statusController = TextEditingController();
+  final TextEditingController _positionController = TextEditingController();
+  final TextEditingController _profInstitutionController = TextEditingController();
+  final TextEditingController _profStartYearController = TextEditingController();
+  final TextEditingController _profEndYearController = TextEditingController();
+  final TextEditingController _profCurrentYearController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _repository = UserRepository(serverUrl: widget.serverUrl, baseUrl: null);
+    _fetchUserProfile();
+  }
+
+  Future<void> _fetchUserProfile() async {
+    try {
+      _user = (await _repository.getUserProfile(widget.userId, widget.token))!;
+      setState(() {
+        _isLoading = false;
+        _nameController.text = _user.name;
+        _emailController.text = _user.email;
+        _phoneController.text = _user.phone;
+        _dobController.text = _user.dob.toIso8601String().substring(0, 10);
+        _genderController.text = _user.gender;
+        // Set other controllers if needed
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      // Handle error
+    }
+  }
+
+  Future<void> _updateProfilePicture(FormData formData) async {
+    try {
+      await _repository.updateProfilePicture(widget.userId, formData, widget.token);
+      // Show success message
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  Future<void> _removeProfilePicture() async {
+    try {
+      await _repository.removeProfilePicture(widget.userId, widget.token);
+      // Show success message
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  Future<void> _updatePassword() async {
+    if (_oldPasswordController.text.isNotEmpty && _newPasswordController.text.isNotEmpty) {
+      setState(() {
+        _isUpdating = true;
+      });
+      try {
+        await _repository.updatePassword(_oldPasswordController.text, _newPasswordController.text, widget.token);
+        setState(() {
+          _isUpdating = false;
+        });
+        // Show success message
+      } catch (e) {
+        setState(() {
+          _isUpdating = false;
+        });
+        // Handle error
+      }
+    }
+  }
+
+  Future<void> _sendOtp() async {
+    if (_phoneController.text.isNotEmpty) {
+      setState(() {
+        _isUpdating = true;
+      });
+      try {
+        await _repository.sendOtp(_phoneController.text, widget.token);
+        setState(() {
+          _isUpdating = false;
+        });
+        // Show success message
+      } catch (e) {
+        setState(() {
+          _isUpdating = false;
+        });
+        // Handle error
+      }
+    }
+  }
+
+  Future<void> _updatePhoneNumber() async {
+    if (_phoneController.text.isNotEmpty && _otpController.text.isNotEmpty) {
+      setState(() {
+        _isUpdating = true;
+      });
+      try {
+        await _repository.verifyOtpAndUpdatePhone(_phoneController.text, _otpController.text, widget.token);
+        setState(() {
+          _isUpdating = false;
+        });
+        // Show success message
+      } catch (e) {
+        setState(() {
+          _isUpdating = false;
+        });
+        // Handle error
+      }
+    }
+  }
+
+  Future<void> _updateEducation() async {
+    final education = Education(
+      degree: _degreeController.text,
+      institution: _institutionController.text,
+      startYear: int.parse(_startYearController.text),
+      endYear: int.parse(_endYearController.text),
+      currentYear: int.parse(_currentYearController.text),
+    );
+
+    try {
+      await _repository.updateEducation(widget.userId, [education], widget.token);
+      // Show success message
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  Future<void> _updateProfessionalDetails() async {
+    final professionalDetails = ProfessionalDetails(
+      status: _statusController.text,
+      position: _positionController.text,
+      institution: _profInstitutionController.text,
+      startYear: int.parse(_profStartYearController.text),
+      endYear: int.parse(_profEndYearController.text),
+      currentYear: int.parse(_profCurrentYearController.text),
+    );
+
+    try {
+      await _repository.updateProfessionalDetails(widget.userId, professionalDetails, widget.token);
+      // Show success message
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Edit Profile')),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  children: <Widget>[
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: InputDecoration(labelText: 'Name'),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your name';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: InputDecoration(labelText: 'Email'),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your email';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: _phoneController,
+                      decoration: InputDecoration(labelText: 'Phone'),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your phone number';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: _dobController,
+                      decoration: InputDecoration(labelText: 'Date of Birth'),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your date of birth';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: _genderController,
+                      decoration: InputDecoration(labelText: 'Gender'),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your gender';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 20),
+                    TextFormField(
+                      controller: _oldPasswordController,
+                      decoration: InputDecoration(labelText: 'Old Password'),
+                      obscureText: true,
+                    ),
+                    TextFormField(
+                      controller: _newPasswordController,
+                      decoration: InputDecoration(labelText: 'New Password'),
+                      obscureText: true,
+                    ),
+                    ElevatedButton(
+                      onPressed: _updatePassword,
+                      child: Text('Update Password'),
+                    ),
+                    SizedBox(height: 20),
+                    TextFormField(
+                      controller: _otpController,
+                      decoration: InputDecoration(labelText: 'OTP'),
+                    ),
+                    ElevatedButton(
+                      onPressed: _updatePhoneNumber,
+                      child: Text('Update Phone Number'),
+                    ),
+                    ElevatedButton(
+                      onPressed: _sendOtp,
+                      child: Text('Send OTP'),
+                    ),
+                    SizedBox(height: 20),
+                    TextFormField(
+                      controller: _degreeController,
+                      decoration: InputDecoration(labelText: 'Degree'),
+                    ),
+                    TextFormField(
+                      controller: _institutionController,
+                      decoration: InputDecoration(labelText: 'Institution'),
+                    ),
+                    TextFormField(
+                      controller: _startYearController,
+                      decoration: InputDecoration(labelText: 'Start Year'),
+                    ),
+                    TextFormField(
+                      controller: _endYearController,
+                      decoration: InputDecoration(labelText: 'End Year'),
+                    ),
+                    TextFormField(
+                      controller: _currentYearController,
+                      decoration: InputDecoration(labelText: 'Current Year'),
+                    ),
+                    ElevatedButton(
+                      onPressed: _updateEducation,
+                      child: Text('Update Education'),
+                    ),
+                    SizedBox(height: 20),
+                    TextFormField(
+                      controller: _statusController,
+                      decoration: InputDecoration(labelText: 'Status'),
+                    ),
+                    TextFormField(
+                      controller: _positionController,
+                      decoration: InputDecoration(labelText: 'Position'),
+                    ),
+                    TextFormField(
+                      controller: _profInstitutionController,
+                      decoration: InputDecoration(labelText: 'Institution'),
+                    ),
+                    TextFormField(
+                      controller: _profStartYearController,
+                      decoration: InputDecoration(labelText: 'Start Year'),
+                    ),
+                    TextFormField(
+                      controller: _profEndYearController,
+                      decoration: InputDecoration(labelText: 'End Year'),
+                    ),
+                    TextFormField(
+                      controller: _profCurrentYearController,
+                      decoration: InputDecoration(labelText: 'Current Year'),
+                    ),
+                    ElevatedButton(
+                      onPressed: _updateProfessionalDetails,
+                      child: Text('Update Professional Details'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+}
+
+
+
+
+
+
+// import 'package:divmeds/designs/app_colors.dart';
+// import 'package:divmeds/features/auth/repositories/user_repo.dart';
+// import 'package:flutter/material.dart';
+// import 'package:divmeds/features/auth/models/user.model.dart';
+
+
+// class EditProfilePage extends StatefulWidget {
+//   final String userId;
+//   final String token;
+//   final String serverUrl;
+
+//   const EditProfilePage({
+//     super.key,
+//     required this.userId,
+//     required this.token,
+//     required this.serverUrl,
+//   });
+
+//   @override
+//   EditProfilePageState createState() => EditProfilePageState();
+// }
+
+// class EditProfilePageState extends State<EditProfilePage> {
+//   final _formKeyBasicDetails = GlobalKey<FormState>();
+//   final _formKeyPhoneNumber = GlobalKey<FormState>();
+//   final _formKeyEducation = GlobalKey<FormState>();
+  
+//   late User _user;
+//   bool _isLoading = true;
+//   bool _isUpdatingBasicDetails = false;
+//   bool _isUpdatingPhoneNumber = false;
+//   bool _isUpdatingEducation = false;
+//   late UserRepository _repository;
+
+//   final TextEditingController _firstNameController = TextEditingController();
+//     final TextEditingController _lastNameController = TextEditingController();
+//   final TextEditingController _emailController = TextEditingController();
+//   final TextEditingController _phoneController = TextEditingController();
+//   final TextEditingController _dobController = TextEditingController();
+//   final TextEditingController _genderController = TextEditingController();
+//   final TextEditingController _otpController = TextEditingController();
+//   final TextEditingController _degreeController = TextEditingController();
+//   final TextEditingController _institutionController = TextEditingController();
+//   final TextEditingController _startYearController = TextEditingController();
+//   final TextEditingController _endYearController = TextEditingController();
+//   final TextEditingController _currentYearController = TextEditingController();
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _repository = UserRepository(serverUrl: widget.serverUrl);
+//     _fetchUserProfile();
+//   }
+
+//   Future<void> _fetchUserProfile() async {
+//     try {
+//       _user = (await _repository.getLoggedInUserProfile(widget.token))!;
+//       setState(() {
+//         _isLoading = false;
+//         _firstNameController.text = _user.firstname;
+//         _lastNameController.text = _user.lastname;
+//         _emailController.text = _user.email;
+//         _phoneController.text = _user.phone;
+//         _dobController.text = _user.dob.toIso8601String().substring(0, 10);
+//         _genderController.text = _user.gender;
+//         // Set other controllers if needed
+//       });
+//     } catch (e) {
+//       setState(() {
+//         _isLoading = false;
+//       });
+//       // Handle error
+//     }
+//   }
+
+
+
+//   Future<void> _sendOtp() async {
+//     if (_phoneController.text.isNotEmpty) {
+//       setState(() {
+//         _isUpdatingPhoneNumber = true;
+//       });
+//       try {
+//         await _repository.sendOtp(_phoneController.text, widget.token);
+//         setState(() {
+//           _isUpdatingPhoneNumber = false;
+//         });
+//         // Show success message
+//       } catch (e) {
+//         setState(() {
+//           _isUpdatingPhoneNumber = false;
+//         });
+//         // Handle error
+//       }
+//     }
+//   }
+
+//   Future<void> _updatePhoneNumber() async {
+//     if (_formKeyPhoneNumber.currentState!.validate()) {
+//       setState(() {
+//         _isUpdatingPhoneNumber = true;
+//       });
+//       try {
+//         await _repository.verifyOtpAndUpdatePhone({
+//           'phone': _phoneController.text,
+//           'otp': _otpController.text,
+//         },
+//         widget.token,);
+//         setState(() {
+//           _isUpdatingPhoneNumber = false;
+//         });
+//         // Show success message
+//       } catch (e) {
+//         setState(() {
+//           _isUpdatingPhoneNumber = false;
+//         });
+//         // Handle error
+//       }
+//     }
+//   }
+
+//   Future<void> _updateEducation() async {
+//     if (_formKeyEducation.currentState!.validate()) {
+//       final education = Education(
+//         degree: _degreeController.text,
+//         institution: _institutionController.text,
+//         startYear: int.parse(_startYearController.text),
+//         endYear: int.parse(_endYearController.text),
+//         currentYear: int.parse(_currentYearController.text),
+//       );
+
+//       setState(() {
+//         _isUpdatingEducation = true;
+//       });
+
+//       try {
+//         await _repository.updateEducation( [education], widget.token);
+//         setState(() {
+//           _isUpdatingEducation = false;
+//         });
+//         // Show success message
+//       } catch (e) {
+//         setState(() {
+//           _isUpdatingEducation = false;
+//         });
+//         // Handle error
+//       }
+//     }
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//        decoration: BoxDecoration(
+//             gradient: LinearGradient(
+//               begin: Alignment.topLeft,
+//               end: Alignment.bottomCenter,
+//               colors: const [
+//                 AppColors.divMedsColorWhite,
+//                 AppColors.divMedsColorWhite,
+//                 AppColors.divMedsColorWhite,
+//                 AppColors.divMedsColorBlue4,
+//               ],
+//             ),
+//           ),
+//       child: Scaffold(
+//         backgroundColor: Colors.transparent,
+//         appBar: AppBar(title: Text('Edit Profile')),
+//         body: _isLoading
+//             ? Center(child: CircularProgressIndicator())
+//             : Padding(
+//                 padding: EdgeInsets.all(16.0),
+//                 child: ListView(
+//                   children: [
+//                     Form(
+//                       key: _formKeyBasicDetails,
+//                       child: Column(
+//                         crossAxisAlignment: CrossAxisAlignment.start,
+//                         children: [
+//                           Text('Basic Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+//                           TextFormField(
+//                             controller: _firstNameController,
+//                             decoration: InputDecoration(labelText: 'Name'),
+//                             validator: (value) {
+//                               if (value == null || value.isEmpty) {
+//                                 return 'Please enter your name';
+//                               }
+//                               return null;
+//                             },
+//                           ),
+//                           TextFormField(
+//                             controller: _dobController,
+//                             decoration: InputDecoration(labelText: 'Date of Birth'),
+//                             validator: (value) {
+//                               if (value == null || value.isEmpty) {
+//                                 return 'Please enter your date of birth';
+//                               }
+//                               return null;
+//                             },
+//                           ),
+//                           TextFormField(
+//                             controller: _genderController,
+//                             decoration: InputDecoration(labelText: 'Gender'),
+//                             validator: (value) {
+//                               if (value == null || value.isEmpty) {
+//                                 return 'Please enter your gender';
+//                               }
+//                               return null;
+//                             },
+//                           ),
+//                           SizedBox(height: 20),
+//                           ElevatedButton(
+//                             onPressed: _isUpdatingBasicDetails ? null : null,
+//                             child: _isUpdatingBasicDetails
+//                                 ? CircularProgressIndicator()
+//                                 : Text('Submit'),
+//                           ),
+//                         ],
+//                       ),
+//                     ),
+//                     SizedBox(height: 40),
+//                     Form(
+//                       key: _formKeyPhoneNumber,
+//                       child: Column(
+//                         crossAxisAlignment: CrossAxisAlignment.start,
+//                         children: <Widget>[
+//                           Text('Update Phone Number', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+//                           TextFormField(
+//                             controller: _phoneController,
+//                             decoration: InputDecoration(labelText: 'New Phone Number'),
+//                             validator: (value) {
+//                               if (value == null || value.isEmpty) {
+//                                 return 'Please enter your phone number';
+//                               }
+//                               return null;
+//                             },
+//                           ),
+//                           TextFormField(
+//                             controller: _otpController,
+//                             decoration: InputDecoration(labelText: 'OTP'),
+//                           ),
+//                           ElevatedButton(
+//                             onPressed: _isUpdatingPhoneNumber ? null : _sendOtp,
+//                             child: _isUpdatingPhoneNumber
+//                                 ? CircularProgressIndicator()
+//                                 : Text('Send OTP'),
+//                           ),
+//                           SizedBox(height: 20),
+//                           ElevatedButton(
+//                             onPressed: _isUpdatingPhoneNumber ? null : _updatePhoneNumber,
+//                             child: _isUpdatingPhoneNumber
+//                                 ? CircularProgressIndicator()
+//                                 : Text('Submit'),
+//                           ),
+//                         ],
+//                       ),
+//                     ),
+//                     SizedBox(height: 40),
+//                     Form(
+//                       key: _formKeyEducation,
+//                       child: Column(
+//                         crossAxisAlignment: CrossAxisAlignment.start,
+//                         children: [
+//                           Text('Educational Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+//                           TextFormField(
+//                             controller: _degreeController,
+//                             decoration: InputDecoration(labelText: 'Degree'),
+//                           ),
+//                           TextFormField(
+//                             controller: _institutionController,
+//                             decoration: InputDecoration(labelText: 'Institution'),
+//                           ),
+//                           TextFormField(
+//                             controller: _startYearController,
+//                             decoration: InputDecoration(labelText: 'Start Year'),
+//                           ),
+//                           TextFormField(
+//                             controller: _endYearController,
+//                             decoration: InputDecoration(labelText: 'End Year'),
+//                           ),
+//                           TextFormField(
+//                             controller: _currentYearController,
+//                             decoration: InputDecoration(labelText: 'Current Year'),
+//                           ),
+//                           SizedBox(height: 20),
+//                           ElevatedButton(
+//                             onPressed: _isUpdatingEducation ? null : _updateEducation,
+//                             child: _isUpdatingEducation
+//                                 ? CircularProgressIndicator()
+//                                 : Text('Submit'),
+//                           ),
+//                         ],
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//       ),
+//     );
+//   }
+// }
+
+
+

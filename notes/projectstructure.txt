@@ -1,0 +1,12 @@
+lib ->
+       1. core -> api[url], db[local]
+       2. designs -> all the design related stuff
+       3. features -> all the app's features, further divided into:
+                     1. bloc
+                     2. models
+                     3. components
+                     4. repositories
+                     5. ui [feature's applied user interface ]
+navigation bar containing all the homefeed, explorefeed, postbutton, clubsscreen, profilescreen features separately.
+
+UserRegistration -> TermsAndConditions -> EnterMobileNumber -> SubmitOTP -> BirthdayPicker -> UserRegistrationForm (userid - fullname - gender - password)

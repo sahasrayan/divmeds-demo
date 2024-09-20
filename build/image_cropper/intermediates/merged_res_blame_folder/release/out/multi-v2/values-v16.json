@@ -1,0 +1,36 @@
+{
+    "logs": [
+        {
+            "outputFile": "vn.hunghd.flutter.plugins.imagecropper.image_cropper-mergeReleaseResources-39:/values-v16/values-v16.xml",
+            "map": [
+                {
+                    "source": "/Users/sahasrayan/.gradle/caches/transforms-3/abb8ab8578f6d34ea3ff9f123a2efb0b/transformed/appcompat-1.6.1/res/values-v16/values-v16.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "5",
+                        "endColumns": "12",
+                        "endOffsets": "223"
+                    }
+                }
+            ]
+        },
+        {
+            "outputFile": "vn.hunghd.flutter.plugins.imagecropper.image_cropper-merged_res-41:/values-v16/values-v16.xml",
+            "map": [
+                {
+                    "source": "/Users/sahasrayan/.gradle/caches/transforms-3/abb8ab8578f6d34ea3ff9f123a2efb0b/transformed/appcompat-1.6.1/res/values-v16/values-v16.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "5",
+                        "endColumns": "12",
+                        "endOffsets": "223"
+                    }
+                }
+            ]
+        }
+    ]
+}

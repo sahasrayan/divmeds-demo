@@ -1,0 +1,59 @@
+import 'package:divmeds/app.dart';
+import 'package:divmeds/designs/app_theme.dart';
+import 'package:divmeds/features/auth/bloc/forgot%20password/bloc/forgot%20password/bloc/auth_forgot_password_bloc.dart';
+import 'package:divmeds/features/auth/bloc/login/bloc/login/bloc/auth_login_bloc.dart';
+import 'package:divmeds/features/auth/bloc/registration/bloc/enter%20mobile%20number/bloc/auth_enter_mobile_number_bloc.dart';
+import 'package:divmeds/features/auth/bloc/registration/bloc/otp%20enter/bloc/auth_otp_enter_bloc.dart';
+import 'package:divmeds/features/auth/bloc/registration/bloc/user%20registration%20form/bloc/auth_user_registration_form_bloc.dart';
+import 'package:divmeds/features/auth/ui/login/auth_login.dart';
+import 'package:divmeds/features/auth/ui/registration/user%20registration%20form/auth_user_registration_form.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthLoginBloc>(
+          create: (context) => AuthLoginBloc(),
+          child: const AuthLoginScreen(),
+        ),
+        BlocProvider<AuthUserRegistrationFormBloc>(
+          create: (BuildContext context) {
+            return AuthUserRegistrationFormBloc();
+          },
+          child: const UserRegistrationForm(),
+        ),
+        BlocProvider<AuthEnterMobileNumberBloc>(
+          create: (BuildContext context) {
+            return AuthEnterMobileNumberBloc();
+          },
+        ),
+        BlocProvider<AuthOtpEnterBloc>(
+          create: (BuildContext context) {
+            return AuthOtpEnterBloc();
+          },
+        ),
+        
+        BlocProvider<AuthForgotPasswordBloc>(create: (BuildContext context){
+          return AuthForgotPasswordBloc();
+        })
+      ],
+      child: MaterialApp(
+        title: "DivMeds",
+        debugShowCheckedModeBanner: false,
+        home: const DecidePage(),
+        theme: lightTheme,
+        darkTheme: darkTheme,
+        themeMode: ThemeMode.light,
+      ),
+    );
+  }
+}

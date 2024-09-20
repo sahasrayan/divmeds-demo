@@ -1,0 +1,913 @@
+class User {
+  final String id;
+  final String firstName;
+  final String lastName;
+  final String userId;
+  final String email;
+  final String phone;
+  final String dob;
+  final String gender;
+  final String profilePicture;
+  final bool isHealthcare;
+  final bool isNonHealthcare;
+  final bool isVerified;
+  final List<VerificationDocument> verificationDocuments;
+  final List<Education> education;
+  final ProfessionalDetails professionalDetails;
+  final List<String> connections;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String role;
+
+  User({
+    required this.id,
+    required this.firstName,
+    required this.lastName,
+    required this.userId,
+    required this.email,
+    required this.phone,
+    required this.dob,
+    required this.gender,
+    required this.profilePicture,
+    required this.isHealthcare,
+    required this.isNonHealthcare,
+    required this.isVerified,
+    required this.verificationDocuments,
+    required this.education,
+    required this.professionalDetails,
+    required this.connections,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.role,
+  });
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['_id'],
+      firstName: json['firstName'],
+      lastName: json['lastName'],
+      userId: json['userId'],
+      email: json['email'] ?? '',
+      phone: json['phone'],
+      dob: json['dob'],
+      gender: json['gender'],
+      profilePicture: json['profilePicture'] ?? '',
+      isHealthcare: json['isHealthcare'],
+      isNonHealthcare: json['isNonHealthcare'],
+      isVerified: json['isVerified'],
+      verificationDocuments: (json['verificationDocuments'] as List)
+          .map((i) => VerificationDocument.fromJson(i))
+          .toList(),
+      education: (json['education'] as List)
+          .map((i) => Education.fromJson(i))
+          .toList(),
+      professionalDetails: ProfessionalDetails.fromJson(json['professionalDetails']),
+      connections: List<String>.from(json['connections']),
+      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
+      role: json['role'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'firstName': firstName,
+      'lastName': lastName,
+      'userId': userId,
+      'email': email,
+      'phone': phone,
+      'dob': dob,
+      'gender': gender,
+      'profilePicture': profilePicture,
+      'isHealthcare': isHealthcare,
+      'isNonHealthcare': isNonHealthcare,
+      'isVerified': isVerified,
+      'verificationDocuments': verificationDocuments.map((i) => i.toJson()).toList(),
+      'education': education.map((i) => i.toJson()).toList(),
+      'professionalDetails': professionalDetails.toJson(),
+      'connections': connections,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'role': role,
+    };
+  }
+}
+
+class VerificationDocument {
+  final String name;
+  final String url;
+
+  VerificationDocument({
+    required this.name,
+    required this.url,
+  });
+
+  factory VerificationDocument.fromJson(Map<String, dynamic> json) {
+    return VerificationDocument(
+      name: json['name'],
+      url: json['url'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'url': url,
+    };
+  }
+}
+
+class Education {
+  final String degree;
+  final String institution;
+  final int startYear;
+  final int endYear;
+  final String currentYear;
+
+  Education({
+    required this.degree,
+    required this.institution,
+    required this.startYear,
+    required this.endYear,
+    required this.currentYear,
+  });
+
+  factory Education.fromJson(Map<String, dynamic> json) {
+    return Education(
+      degree: json['degree'],
+      institution: json['institution'],
+      startYear: json['startYear'],
+      endYear: json['endYear'],
+      currentYear: json['currentYear'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'degree': degree,
+      'institution': institution,
+      'startYear': startYear,
+      'endYear': endYear,
+      'currentYear': currentYear,
+    };
+  }
+}
+
+class ProfessionalDetails {
+  final String status;
+  final String institution;
+  final String position;
+  final int startYear;
+  final int endYear;
+  final int currentYear;
+
+  ProfessionalDetails({
+    required this.status,
+    required this.institution,
+    required this.position,
+    required this.startYear,
+    required this.endYear,
+    required this.currentYear,
+  });
+
+  factory ProfessionalDetails.fromJson(Map<String, dynamic> json) {
+    return ProfessionalDetails(
+      status: json['status'],
+      institution: json['institution'],
+      position: json['position'],
+      startYear: json['startYear'],
+      endYear: json['endYear'],
+      currentYear: json['currentYear'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'status': status,
+      'institution': institution,
+      'position': position,
+      'startYear': startYear,
+      'endYear': endYear,
+      'currentYear': currentYear,
+    };
+  }
+}
+import 'dart:developer';
+import 'package:dio/dio.dart';
+import 'package:divmeds/features/auth/models/user.model.dart';
+import 'package:divmeds/features/navigationbar/bottomnavigationbar/features/post/models/post.model.dart';
+
+class UserRepository {
+  final Dio _dio = Dio();
+  final String serverUrl;
+
+  UserRepository({required this.serverUrl});
+
+  // Get the logged-in user's profile
+  Future<User?> getLoggedInUserProfile(String token) async {
+    try {
+      final response = await _dio.get(
+        '$serverUrl/me',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log(response.data.toString());
+        User user = User.fromJson(response.data['user']);
+        return user;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      log(e.toString());
+      return null;
+    }
+  }
+// Get the logged-in user's education details
+Future<List<Education>?> getUserEducation(String token) async {
+  try {
+    final response = await _dio.get(
+      '$serverUrl/me/education',
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+
+    if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+      log(response.data.toString());
+      List<Education> education = (response.data as List).map((i) => Education.fromJson(i)).toList();
+      return education;
+    } else {
+      return null;
+    }
+  } catch (e) {
+    log(e.toString());
+    return null;
+  }
+}
+
+// Get the logged-in user's professional details
+Future<ProfessionalDetails?> getUserProfession(String token) async {
+  try {
+    final response = await _dio.get(
+      '$serverUrl/me/profession',
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+
+    if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+      log(response.data.toString());
+      ProfessionalDetails professionalDetails = ProfessionalDetails.fromJson(response.data);
+      return professionalDetails;
+    } else {
+      return null;
+    }
+  } catch (e) {
+    log(e.toString());
+    return null;
+  }
+}
+
+  // Update user profile name
+  Future<void> updateProfileName(Map<String, dynamic> updates, String token) async {
+    try {
+      final response = await _dio.put(
+        '$serverUrl/update/name',
+        data: updates,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log('Profile name updated successfully');
+      } else {
+        throw Exception('Failed to update profile name');
+      }
+    } catch (e) {
+      log(e.toString());
+      throw Exception('Failed to update profile name');
+    }
+  }
+    // Update userId
+  Future<void> updateUserId(String newUserId, String token) async {
+    try {
+      final response = await _dio.put(
+        '$serverUrl/api/profile/update-userId',
+        data: {'newUserId': newUserId},
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log('UserId updated successfully');
+      } else {
+        throw Exception('Failed to update userId');
+      }
+    } catch (e) {
+      log(e.toString());
+      throw Exception('Failed to update userId');
+    }
+  }
+
+  // Update user DOB
+  Future<void> updateDob(String dob, String token) async {
+    try {
+      final response = await _dio.put(
+        '$serverUrl/api/profile/update-dob',
+        data: {'dob': dob},
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log('DOB updated successfully');
+      } else {
+        throw Exception('Failed to update DOB');
+      }
+    } catch (e) {
+      log(e.toString());
+      throw Exception('Failed to update DOB');
+    }
+  }
+
+  // Fetch the logged-in user's posts
+  Future<List<Post>?> getMyPosts(String token) async {
+    try {
+      final response = await _dio.get(
+        '$serverUrl/me/posts',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log(response.data.toString());
+        List<Post> posts = (response.data as List).map((i) => Post.fromJson(i)).toList();
+        return posts;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      log(e.toString());
+      return null;
+    }
+  }
+
+  // Share the logged-in user's profile
+  Future<void> shareUserProfile(String token) async {
+    try {
+      final response = await _dio.get(
+        '$serverUrl/share/me',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log('User profile shared successfully');
+      } else {
+        throw Exception('Failed to share user profile');
+      }
+    } catch (e) {
+      log(e.toString());
+      throw Exception('Failed to share user profile');
+    }
+  }
+  // Get another user's profile by user ID
+  Future<User?> getUserProfile(String userId, String token) async {
+    try {
+      final response = await _dio.get(
+        '$serverUrl/$userId',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log(response.data.toString());
+        User user = User.fromJson(response.data);
+        return user;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      log(e.toString());
+      return null;
+    }
+  }
+
+
+  // Share other user's profile
+  Future<void> shareOtherUserProfile(String userId, String token) async {
+    try {
+      final response = await _dio.get(
+        '$serverUrl/share/$userId',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log('Other user profile shared successfully');
+      } else {
+        throw Exception('Failed to share other user profile');
+      }
+    } catch (e) {
+      log(e.toString());
+      throw Exception('Failed to share other user profile');
+    }
+  }
+
+  // Update user profile picture
+  Future<void> updateProfilePicture(FormData formData, String token) async {
+    try {
+      final response = await _dio.put(
+        '$serverUrl/update-profile-picture',
+        data: formData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'multipart/form-data',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log('Profile picture updated successfully');
+      } else {
+        throw Exception('Failed to update profile picture');
+      }
+    } catch (e) {
+      log(e.toString());
+      throw Exception('Failed to update profile picture');
+    }
+  }
+
+  // Remove user profile picture
+  Future<void> removeProfilePicture(String token) async {
+    try {
+      final response = await _dio.delete(
+        '$serverUrl/remove-profile-picture',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log('Profile picture removed successfully');
+      } else {
+        throw Exception('Failed to remove profile picture');
+      }
+    } catch (e) {
+      log(e.toString());
+      throw Exception('Failed to remove profile picture');
+    }
+  }
+
+  // Update user email
+  Future<void> updateEmail(Map<String, dynamic> emailData, String token) async {
+    try {
+      final response = await _dio.put(
+        '$serverUrl/update-email',
+        data: emailData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log('Email updated successfully');
+      } else {
+        throw Exception('Failed to update email');
+      }
+    } catch (e) {
+      log(e.toString());
+      throw Exception('Failed to update email');
+    }
+  }
+
+  // Update user password
+  Future<void> updatePassword(Map<String, dynamic> passwordData, String token) async {
+    try {
+      final response = await _dio.put(
+        '$serverUrl/update-password',
+        data: passwordData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log('Password updated successfully');
+      } else {
+        throw Exception('Failed to update password');
+      }
+    } catch (e) {
+      log(e.toString());
+      throw Exception('Failed to update password');
+    }
+  }
+
+  // Send OTP for phone number update
+  Future<void> sendOtp(String phone, String token) async {
+    try {
+      final response = await _dio.post(
+        '$serverUrl/send-otp',
+        data: {'phone': phone},
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log('OTP sent successfully');
+      } else {
+        throw Exception('Failed to send OTP');
+      }
+    } catch (e) {
+      log(e.toString());
+      throw Exception('Failed to send OTP');
+    }
+  }
+
+  // Verify OTP and update phone number
+  Future<void> verifyOtpAndUpdatePhone(Map<String, dynamic> otpData, String token) async {
+    try {
+      final response = await _dio.put(
+        '$serverUrl/verify-otp-update-phone',
+        data: otpData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log('Phone number updated successfully');
+      } else {
+        throw Exception('Failed to update phone number');
+      }
+    } catch (e) {
+      log(e.toString());
+      throw Exception('Failed to update phone number');
+    }
+  }
+
+  // Send OTP for password reset
+  Future<void> sendForgotPasswordOtp(String email) async {
+    try {
+      final response = await _dio.post(
+        '$serverUrl/forgot-password/send-otp',
+        data: {'email': email},
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log('Forgot password OTP sent successfully');
+      } else {
+        throw Exception('Failed to send forgot password OTP');
+      }
+    } catch (e) {
+      log(e.toString());
+      throw Exception('Failed to send forgot password OTP');
+    }
+  }
+
+  // Verify OTP and reset password
+  Future<void> verifyOtpAndResetPassword(Map<String, dynamic> otpData) async {
+    try {
+      final response = await _dio.post(
+        '$serverUrl/forgot-password/verify-otp',
+        data: otpData,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log('Password reset successfully');
+      } else {
+        throw Exception('Failed to reset password');
+      }
+    } catch (e) {
+      log(e.toString());
+      throw Exception('Failed to reset password');
+    }
+  }
+
+  // Update user gender
+  Future<void> updateGender(Map<String, dynamic> genderData, String token) async {
+    try {
+      final response = await _dio.put(
+        '$serverUrl/update-gender',
+        data: genderData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log('Gender updated successfully');
+      } else {
+        throw Exception('Failed to update gender');
+      }
+    } catch (e) {
+      log(e.toString());
+      throw Exception('Failed to update gender');
+    }
+  }
+
+  // Update user educational details
+  Future<void> updateEducation(List<Education> education, String token) async {
+    try {
+      final response = await _dio.put(
+        '$serverUrl/update-education',
+        data: {
+          'education': education.map((e) => e.toJson()).toList(),
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log('Education details updated successfully');
+      } else {
+        throw Exception('Failed to update education details');
+      }
+    } catch (e) {
+      log(e.toString());
+      throw Exception('Failed to update education details');
+    }
+  }
+
+//   // Update user professional details
+//   Future<void> updateProfessionalDetails(ProfessionalDetails professionalDetails, String token) async {
+//     try {
+//       final response = await _dio.put(
+//         '$serverUrl/update-professional',
+//        data: {
+//           'education': professionalDetails.map((e) => e.toJson()).toList(),
+//         },
+//         options: Options(
+//           headers: {
+//             'Authorization': 'Bearer $token',
+//             'Content-Type': 'application/json',
+//           },
+//         ),
+//       );
+
+//       if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+//         log('Professional details updated successfully');
+//       } else {
+//         throw Exception('Failed to update professional details');
+//       }
+//     } catch (e) {
+//       log(e.toString());
+//       throw Exception('Failed to update professional details');
+//     }
+//   }
+
+}
+
+import 'dart:developer';
+import 'package:dio/dio.dart';
+import 'package:divmeds/core/db/local/sharepreferencesmanager.dart';
+import 'package:divmeds/features/auth/models/user.model.dart';
+
+
+class AuthRepository {
+  final Dio _dio = Dio();
+  final String serverUrl ;
+
+  AuthRepository({required this.serverUrl});
+
+  // Register a new user
+  Future<User?> register({
+    required String firstName,
+    required String lastName,
+    required String userId,
+  
+    required String password,
+    required String phone,
+    required String dob,
+    required String gender,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '$serverUrl/auth/register',
+        data: {
+          'firstName': firstName,
+          'lastName': lastName,
+          'userId': userId,
+        
+          'password': password,
+          'phone': phone,
+          'dob': dob,
+          'gender': gender,
+        },
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log(response.data.toString());
+        User userModel = User.fromJson(response.data['user']);
+        return userModel;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      log(e.toString());
+      return null;
+    }
+  }
+
+  // Login a user
+  Future<Map<String, dynamic>?> login({
+    required String phone,
+    required String password,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '$serverUrl/auth/login',
+        data: {
+          'phone': phone,
+          'password': password,
+        },
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        log('Login response: ${response.data.toString()}');
+        // Save token and user ID
+        String token = response.data['token'];
+        User user = User.fromJson(response.data['user']);
+        await SharedPreferencesManager.saveToken(token);
+        await SharedPreferencesManager.saveUid(user.userId);
+        return {
+          'token': response.data['token'],
+          'user': User.fromJson(response.data['user']),
+        };
+      } else {
+        return null;
+      }
+    } catch (e) {
+      log(e.toString());
+      return null;
+    }
+  }
+  
+  // Logout a user
+  Future<bool> logout(String token) async {
+    try {
+      final response = await _dio.post(
+        '$serverUrl/auth/logout',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.statusCode! >= 200 && response.statusCode! <= 300) {
+        // Clear token and user ID
+        await SharedPreferencesManager.clear();
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      log(e.toString());
+      return false;
+    }
+  }
+}
+
+
+
+
+import 'package:bloc/bloc.dart';
+import 'package:divmeds/utils/validators/validators_regex.dart';
+import 'package:divmeds/features/auth/models/user.model.dart';
+import 'package:divmeds/core/db/local/sharepreferencesmanager.dart';
+import 'package:divmeds/features/auth/repositories/auth_repo.dart';
+import 'package:meta/meta.dart';
+
+part 'auth_login_event.dart';
+part 'auth_login_state.dart';
+
+class AuthLoginBloc extends Bloc<AuthLoginEvent, AuthLoginState> {
+  final AuthRepository authRepository;
+
+  AuthLoginBloc({required this.authRepository}) : super(AuthLoginInitial()) {
+   on<AuthLoginRequestedEvent>(
+  (event, emit) async {
+    try {
+      final phoneNumber = event.phoneNumber;
+      final password = event.password;
+
+      if (phoneNumber.isEmpty) {
+        return emit(AuthLoginFailureState("Phone number is required."));
+      }
+      if (!validateMobileNumber(phoneNumber)) {
+        return emit(AuthLoginFailureState("Invalid phone number entered."));
+      }
+
+      if (password.isEmpty) {
+        return emit(AuthLoginFailureState("Password is required."));
+      }
+      if (!validatePassword(password)) {
+        return emit(
+            AuthLoginFailureState("Invalid password format entered."));
+      }
+
+      emit(AuthLoginLoadingState());
+
+      // Concatenate phone number with country code +91
+      final formattedPhoneNumber = '+91$phoneNumber';
+
+      final result = await authRepository.login(phone: formattedPhoneNumber, password: password);
+
+      if (result != null && result['user'] != null && result['token'] != null) {
+        final user = result['user'] as User;
+        final token = result['token'] as String;
+
+        await SharedPreferencesManager.saveUid(user.userId);
+        await SharedPreferencesManager.saveUser(user);
+        await SharedPreferencesManager.saveToken(token);
+
+        emit(AuthLoginSuccessState(user: user, token: token));
+      } else {
+        emit(AuthLoginFailureState("Failed to login. Missing token or user data."));
+      }
+    } catch (error) {
+      emit(AuthLoginFailureState("An error occurred: ${error.toString()}"));
+    }
+  },
+);
+  }
+}
+
+
+
+

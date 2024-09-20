@@ -1,0 +1,65 @@
+LogOut: 
+Client Side (e.g., Flutter)
+On the client side, you should remove the token from wherever it is stored (local storage, secure storage, cookies, etc.)
+ upon receiving a successful response from the logout endpoint. 
+ This ensures that the user cannot make authenticated requests after logging out.
+
+By integrating these components, you can effectively handle user logouts in your application.
+
+To effectively handle user logouts in your application,
+ particularly when using SharedPreferences for token storage in a Flutter app,
+you can follow these steps. Here, we'll provide the Flutter implementation for
+storing and removing the token, as well as the backend implementation for the logout functionality.
+
+1. Add shared_preferences dependency:
+   Add this line to your pubspec.yaml file under dependencies:
+dependencies:
+  flutter:
+    sdk: flutter
+  shared_preferences: ^2.0.7
+
+
+2. Store the token:
+After a successful login, store the token in SharedPreferences:
+
+import 'package:shared_preferences/shared_preferences.dart';
+
+Future<void> storeToken(String token) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.setString('authToken', token);
+}
+
+3. Remove the token on logout:
+When the user logs out, remove the token from SharedPreferences:
+
+Future<void> removeToken() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.remove('authToken');
+}
+
+4. Perform logout request and remove token:
+Make a request to the backend to perform the logout, and upon successful response, remove the token:
+
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+Future<void> logout() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('authToken');
+
+  final response = await http.post(
+    Uri.parse('http://localhost:3000/api/v1/auth/logout'),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    await removeToken();
+    // Navigate the user to the login screen or perform other logout actions
+  } else {
+    // Handle logout failure
+    print('Failed to logout');
+  }
+}

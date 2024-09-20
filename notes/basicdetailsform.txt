@@ -1,0 +1,476 @@
+
+
+// import 'package:divmeds/features/auth/models/user.model.dart';
+// import 'package:divmeds/features/auth/repositories/user_repo.dart';
+// import 'package:flutter/material.dart';
+// import 'package:intl/intl.dart';
+
+// final GlobalKey<FormState> _basicDetailsFormKey = GlobalKey<FormState>();
+
+// class EditProfileBasicDetailsSection extends StatefulWidget {
+//   final String token;
+//   final UserRepository userRepository;
+
+//   const EditProfileBasicDetailsSection({
+//     required this.token,
+//     required this.userRepository,
+//     super.key,
+//   });
+
+//   @override
+//   State<EditProfileBasicDetailsSection> createState() =>
+//       _EditProfileBasicDetailsSectionState();
+// }
+
+// class _EditProfileBasicDetailsSectionState
+//     extends State<EditProfileBasicDetailsSection> {
+//   final TextEditingController _firstNameController = TextEditingController();
+//   final TextEditingController _lastNameController = TextEditingController();
+//   final TextEditingController _userIdController = TextEditingController();
+//   final TextEditingController _mobileController = TextEditingController();
+//   final TextEditingController _dobController = TextEditingController();
+//   String _gender = 'Male';
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _loadUserProfile();
+//   }
+
+//   Future<void> _loadUserProfile() async {
+//     User? user = await widget.userRepository.getLoggedInUserProfile(widget.token);
+//     if (user != null) {
+//       setState(() {
+//         _firstNameController.text = user.firstname;
+//         _lastNameController.text = user.lastname;
+//         _userIdController.text = user.userId;
+//         _mobileController.text = user.phone;
+//         _dobController.text = DateFormat('dd-MM-yyyy').format(user.dob); // Convert to 'DD-MM-YYYY' format
+//         _gender = user.gender;
+//       });
+//     }
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Form(
+//       key: _basicDetailsFormKey,
+//       child: Container(
+//         padding: const EdgeInsets.all(8.0),
+//         color: Colors.white,
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             Row(
+//               mainAxisAlignment: MainAxisAlignment.start,
+//               children: [
+//                 Text(
+//                   "Basic Details",
+//                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+//                 ),
+//               ],
+//             ),
+//             const SizedBox(height: 12),
+//             buildDetailRow("First Name", _firstNameController),
+//             const SizedBox(height: 12),
+//             buildDetailRow("Last Name", _lastNameController),
+//             const SizedBox(height: 12),
+//             buildDetailRow("User ID", _userIdController),
+//             const SizedBox(height: 12),
+//             buildDetailRow("Mobile Number", _mobileController),
+//             const SizedBox(height: 12),
+//             buildDetailRow("Date of Birth", _dobController),
+//             const SizedBox(height: 12),
+//             buildGenderRow("Gender", _gender),
+//             const SizedBox(height: 12),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+
+//   Widget buildDetailRow(String label, TextEditingController controller) {
+//     return Row(
+//       children: [
+//         Expanded(
+//           child: Text(
+//             controller.text.isEmpty ? label : controller.text,
+//             style: TextStyle(fontSize: 16),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+
+//   Widget buildGenderRow(String label, String selectedValue) {
+//     return Row(
+//       children: [
+//         Expanded(
+//           child: Text(
+//             selectedValue.isEmpty ? label : selectedValue,
+//             style: TextStyle(fontSize: 16),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import 'package:divmeds/features/auth/components/text_input_field.dart';
+// import 'package:divmeds/features/auth/models/user.model.dart';
+// import 'package:divmeds/features/auth/repositories/user_repo.dart';
+// import 'package:flutter/material.dart';
+// import 'dart:developer';
+// import 'package:dio/dio.dart';
+
+// final GlobalKey<FormState> _basicDetailsFormKey = GlobalKey<FormState>();
+
+// class EditProfileBasicDetailsSection extends StatefulWidget {
+//   final String token;
+//   final UserRepository userRepository;
+
+//   const EditProfileBasicDetailsSection({
+//     required this.token,
+//     required this.userRepository,
+//     super.key,
+//   });
+
+//   @override
+//   State<EditProfileBasicDetailsSection> createState() =>
+//       _EditProfileBasicDetailsSectionState();
+// }
+
+// class _EditProfileBasicDetailsSectionState
+//     extends State<EditProfileBasicDetailsSection> {
+//   final TextEditingController _firstNameController = TextEditingController();
+//   final TextEditingController _lastNameController = TextEditingController();
+//   final TextEditingController _userIdController = TextEditingController();
+//   final TextEditingController _mobileController = TextEditingController();
+//   final TextEditingController _dobController = TextEditingController();
+//   // final TextEditingController _genderController = TextEditingController();
+//   String _gender = 'Male';
+
+//   bool _isEditingFirstName = false;
+//   bool _isEditingLastName = false;
+//   bool _isEditingUserId = false;
+//   bool _isEditingMobile = false;
+//   bool _isEditingDob = false;
+//   bool _isEditingGender = false;
+//   bool _isUpdatingDetails = false;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _loadUserProfile();
+//   }
+
+//   Future<void> _loadUserProfile() async {
+//     User? user = await widget.userRepository.getLoggedInUserProfile(widget.token);
+//     if (user != null) {
+//       setState(() {
+//         _firstNameController.text = user.firstname;
+//         _lastNameController.text = user.lastname;
+//         _userIdController.text = user.userId;
+//         _mobileController.text = user.phone;
+//         _dobController.text = user.dob.toIso8601String().substring(0, 10); // Converting to 'YYYY-MM-DD' format
+//         _gender = user.gender;
+//       });
+//     }
+//   }
+
+//   Future<void> _updateProfileName() async {
+//     if (_basicDetailsFormKey.currentState!.validate()) {
+//       final updates = {
+//         'firstName': _firstNameController.text,
+//         'lastName': _lastNameController.text,
+//       };
+
+//       setState(() {
+//         _isUpdatingDetails = true;
+//       });
+
+//       try {
+//         await widget.userRepository.updateProfileName(updates, widget.token);
+//         setState(() {
+//           _isUpdatingDetails = false;
+//           _isEditingFirstName = false;
+//           _isEditingLastName = false;
+//         });
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(content: Text('Profile name updated successfully!')),
+//         );
+//       } catch (e) {
+//         setState(() {
+//           _isUpdatingDetails = false;
+//         });
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(content: Text('Failed to update profile name')),
+//         );
+//       }
+//     }
+//   }
+
+//   Future<void> _updateUserId() async {
+//     if (_basicDetailsFormKey.currentState!.validate()) {
+//       setState(() {
+//         _isUpdatingDetails = true;
+//       });
+
+//       try {
+//         await widget.userRepository.updateUserId(_userIdController.text, widget.token);
+//         setState(() {
+//           _isUpdatingDetails = false;
+//           _isEditingUserId = false;
+//         });
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(content: Text('User ID updated successfully!')),
+//         );
+//       } catch (e) {
+//         setState(() {
+//           _isUpdatingDetails = false;
+//         });
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(content: Text('Failed to update User ID')),
+//         );
+//       }
+//     }
+//   }
+
+//   Future<void> _updateDob() async {
+//     if (_basicDetailsFormKey.currentState!.validate()) {
+//       setState(() {
+//         _isUpdatingDetails = true;
+//       });
+
+//       try {
+//         await widget.userRepository.updateDob(_dobController.text, widget.token);
+//         setState(() {
+//           _isUpdatingDetails = false;
+//           _isEditingDob = false;
+//         });
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(content: Text('Date of Birth updated successfully!')),
+//         );
+//       } catch (e) {
+//         setState(() {
+//           _isUpdatingDetails = false;
+//         });
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(content: Text('Failed to update Date of Birth')),
+//         );
+//       }
+//     }
+//   }
+
+//   Future<void> _updateGender() async {
+//     if (_basicDetailsFormKey.currentState!.validate()) {
+//       final genderData = {
+//         'gender': _gender,
+//       };
+
+//       setState(() {
+//         _isUpdatingDetails = true;
+//       });
+
+//       try {
+//         await widget.userRepository.updateGender(genderData, widget.token);
+//         setState(() {
+//           _isUpdatingDetails = false;
+//           _isEditingGender = false;
+//         });
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(content: Text('Gender updated successfully!')),
+//         );
+//       } catch (e) {
+//         setState(() {
+//           _isUpdatingDetails = false;
+//         });
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(content: Text('Failed to update Gender')),
+//         );
+//       }
+//     }
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Form(
+//       key: _basicDetailsFormKey,
+//       child: Container(
+//         padding: const EdgeInsets.all(8.0),
+//         color: Colors.white,
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             Row(
+//               mainAxisAlignment: MainAxisAlignment.start,
+//               children: [
+//                 Text(
+//                   "Basic Details",
+//                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+//                 ),
+//               ],
+//             ),
+//             const SizedBox(height: 12),
+//             buildDetailRow(
+//               "First Name",
+//               _firstNameController,
+//               _isEditingFirstName,
+//               () {
+//                 setState(() {
+//                   _isEditingFirstName = !_isEditingFirstName;
+//                 });
+//               },
+//               _updateProfileName,
+//             ),
+//             const SizedBox(height: 12),
+//             buildDetailRow(
+//               "Last Name",
+//               _lastNameController,
+//               _isEditingLastName,
+//               () {
+//                 setState(() {
+//                   _isEditingLastName = !_isEditingLastName;
+//                 });
+//               },
+//               _updateProfileName,
+//             ),
+//             const SizedBox(height: 12),
+//             buildDetailRow(
+//               "User ID",
+//               _userIdController,
+//               _isEditingUserId,
+//               () {
+//                 setState(() {
+//                   _isEditingUserId = !_isEditingUserId;
+//                 });
+//               },
+//               _updateUserId,
+//             ),
+//             const SizedBox(height: 12),
+//             buildDetailRow(
+//               "Mobile Number",
+//               _mobileController,
+//               _isEditingMobile,
+//               () {
+//                 setState(() {
+//                   _isEditingMobile = !_isEditingMobile;
+//                 });
+//               },
+//             ),
+//             const SizedBox(height: 12),
+//             buildDetailRow(
+//               "Date of Birth",
+//               _dobController,
+//               _isEditingDob,
+//               () {
+//                 setState(() {
+//                   _isEditingDob = !_isEditingDob;
+//                 });
+//               },
+//               _updateDob,
+//             ),
+//             const SizedBox(height: 12),
+//             buildGenderRow(
+//               "Gender",
+//               _gender,
+//               _isEditingGender,
+//               () {
+//                 setState(() {
+//                   _isEditingGender = !_isEditingGender;
+//                 });
+//               },
+//               _updateGender,
+//             ),
+//             const SizedBox(height: 12),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+
+//   Widget buildDetailRow(
+//       String label,
+//       TextEditingController controller,
+//       bool isEditing,
+//       VoidCallback onEdit,
+//       [VoidCallback? onSave]) {
+//     return Row(
+//       children: [
+//         Expanded(
+//           child: isEditing
+//               ? TextInputField(
+//                   hintText: label,
+//                   obscureText: false,
+//                   controller: controller,
+//                 )
+//               : Text(controller.text.isEmpty ? label : controller.text),
+//         ),
+//         IconButton(
+//           icon: Icon(isEditing ? Icons.check : Icons.edit),
+//           onPressed: () {
+//             if (isEditing && onSave != null) {
+//               onSave();
+//             } else {
+//               onEdit();
+//             }
+//           },
+//         ),
+//       ],
+//     );
+//   }
+
+//   Widget buildGenderRow(
+//       String label,
+//       String selectedValue,
+//       bool isEditing,
+//       VoidCallback onEdit,
+//       [VoidCallback? onSave]) {
+//     return Row(
+//       children: [
+//         Expanded(
+//           child: isEditing
+//               ? DropdownButtonFormField<String>(
+//                   value: selectedValue,
+//                   items: [
+//                     DropdownMenuItem(value: "Male", child: Text("Male")),
+//                     DropdownMenuItem(value: "Female", child: Text("Female")),
+//                     DropdownMenuItem(value: "Other", child: Text("Other")),
+//                   ],
+//                   onChanged: (value) {
+//                     setState(() {
+//                       _gender = value!;
+//                     });
+//                   },
+//                   decoration: InputDecoration(labelText: label),
+//                 )
+//               : Text(selectedValue),
+//         ),
+//         IconButton(
+//           icon: Icon(isEditing ? Icons.check : Icons.edit),
+//           onPressed: () {
+//             if (isEditing && onSave != null) {
+//               onSave();
+//             } else {
+//               onEdit();
+//             }
+//           },
+//         ),
+//       ],
+//     );
+//   }
+// }
+

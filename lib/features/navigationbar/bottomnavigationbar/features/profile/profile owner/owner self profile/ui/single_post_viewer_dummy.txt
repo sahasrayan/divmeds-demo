@@ -1,0 +1,283 @@
+import 'package:flutter/material.dart';
+import 'package:divmeds/features/navigationbar/bottomnavigationbar/features/post/models/post.model.dart';
+import 'package:dots_indicator/dots_indicator.dart';
+import 'package:video_player/video_player.dart';
+
+class SinglePostViewerDummy extends StatelessWidget {
+  final Post post;
+
+  const SinglePostViewerDummy({super.key, required this.post});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(post.userId),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _PostHeader(
+                username: post.userId,
+                profileImageUrl: post.userProfileImage,
+              ),
+              const SizedBox(height: 16.0),
+              if (post.content.isNotEmpty)
+                _PostContent(
+                  images: post.images,
+                  videos: post.videos,
+                ),
+              if (post.content.isNotEmpty)
+                _PostText(text: post.content),
+              const SizedBox(height: 16.0),
+              _PostActions(),
+              const SizedBox(height: 8.0),
+              _PostLikes(likes: post.likes.length),
+              const SizedBox(height: 8.0),
+              _PostComments(comments: post.comments.length),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PostHeader extends StatelessWidget {
+  final String username;
+  final String profileImageUrl;
+
+  const _PostHeader({required this.username, required this.profileImageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        CircleAvatar(
+          backgroundImage: NetworkImage(profileImageUrl),
+          radius: 20.0,
+        ),
+        const SizedBox(width: 8.0),
+        Text(
+          username,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const Spacer(),
+        IconButton(
+          icon: const Icon(Icons.more_vert),
+          onPressed: () {
+            // Add your onPressed code here!
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _PostContent extends StatefulWidget {
+  final List<String> images;
+  final List<String> videos;
+
+  const _PostContent({required this.images, required this.videos});
+
+  @override
+  __PostContentState createState() => __PostContentState();
+}
+
+class __PostContentState extends State<_PostContent> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    List<Widget> mediaWidgets = [
+      ...widget.images.map((url) => _PostImage(imageUrl: url)),
+      ...widget.videos.map((url) => _PostVideo(videoUrl: url)),
+    ];
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 300,
+          child: PageView(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentPage = index;
+              });
+            },
+            children: mediaWidgets,
+          ),
+        ),
+        if (mediaWidgets.length > 1)
+          DotsIndicator(
+            dotsCount: mediaWidgets.length,
+            position: _currentPage,
+            decorator: DotsDecorator(
+              activeColor: Colors.blue,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _PostImage extends StatelessWidget {
+  final String imageUrl;
+
+  const _PostImage({required this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(4.0),
+      child: Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+}
+
+class _PostVideo extends StatefulWidget {
+  final String videoUrl;
+
+  const _PostVideo({required this.videoUrl});
+
+  @override
+  _PostVideoState createState() => _PostVideoState();
+}
+
+class _PostVideoState extends State<_PostVideo> {
+  late VideoPlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
+      ..initialize().then((_) {
+        setState(() {});
+        _controller.play();
+        _controller.setLooping(true);
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(4.0),
+      child: _controller.value.isInitialized
+          ? AspectRatio(
+              aspectRatio: _controller.value.aspectRatio,
+              child: VideoPlayer(_controller),
+            )
+          : Container(
+              height: 200.0,
+              color: Colors.black12,
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+    );
+  }
+}
+
+class _PostText extends StatelessWidget {
+  final String text;
+
+  const _PostText({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 16.0,
+          color: Colors.black87,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
+
+class _PostActions extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        IconButton(
+          icon: const Icon(Icons.favorite_border),
+          onPressed: () {
+            // Add your onPressed code here!
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.comment_outlined),
+          onPressed: () {
+            // Add your onPressed code here!
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.share),
+          onPressed: () {
+            // Add your onPressed code here!
+          },
+        ),
+        const Spacer(),
+        IconButton(
+          icon: const Icon(Icons.bookmark_border),
+          onPressed: () {
+            // Add your onPressed code here!
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _PostLikes extends StatelessWidget {
+  final int likes;
+
+  const _PostLikes({required this.likes});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'Liked by $likes others',
+      style: const TextStyle(
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+}
+
+class _PostComments extends StatelessWidget {
+  final int comments;
+
+  const _PostComments({required this.comments});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'View all $comments comments',
+      style: const TextStyle(
+        color: Colors.grey,
+      ),
+    );
+  }
+}
